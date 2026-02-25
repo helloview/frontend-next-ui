@@ -1,0 +1,41 @@
+<svg id="logoSvg" viewBox="40 50 130 200" xmlns="http://www.w3.org/2000/svg">
+ <!-- 
+ Refinement v3:
+ - Shortened Top Line: Start X moved from 150 to 115
+ - Retained Aspect Ratio: Vertical
+ 
+ Geometry:
+ - Top Start: (115, 60) -> Shortened
+ - Left Edge: 50
+ - Right Edge: 150 (defined by bottom curve and dot)
+ - Vertical span: 60 to 240
+ 
+ Style:
+ - Stroke: 14px
+ - Caps: Round
+ -->
+ <defs>
+ <style>
+ .cls-1 { fill: none; stroke: #2C363F; stroke-linecap: round; stroke-linejoin: round; stroke-width: 14px; }
+ .cls-2 { fill: #32AFA0; stroke: none; }
+ </style>
+ </defs>
+ 
+ <!-- Main Line Path -->
+ <!-- 
+ Path Logic Update:
+ 1. Start Top (115, 60) -> This is the shortened start point
+ 2. Line Left to (75, 60)
+ 3. Curve Top-Left Corner to (50, 85)
+ 4. Line Down to (50, 215)
+ 5. Curve Bottom-Left Corner to (75, 240)
+ 6. Line Right to (125, 240)
+ 7. Curve Bottom-Right Corner to (150, 215)
+ 8. Line Up right side to (150, 170)
+ -->
+ <path class="cls-1" d="M 115 60 L 75 60 Q 50 60 50 85 L 50 215 Q 50 240 75 240 L 125 240 Q 150 240 150 215 L 150 170"></path>
+ 
+ <!-- The Dot -->
+ <!-- Aligned with the right-most edge (x=150) -->
+ <circle class="cls-2" cx="150" cy="125" r="16"></circle>
+ </svg>
