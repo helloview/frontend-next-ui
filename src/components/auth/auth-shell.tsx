@@ -53,31 +53,33 @@ export function AuthShell({ children }: AuthShellProps) {
   ] as const;
 
   return (
-    <div className="h-screen overflow-hidden bg-white font-sans text-zinc-900 selection:bg-zinc-200">
+    <div className="h-screen min-h-[100dvh] overflow-hidden bg-white font-sans text-zinc-900 selection:bg-zinc-200">
       <div className="flex h-full overflow-hidden">
-        <div className="relative hidden h-full w-1/2 overflow-hidden border-r border-zinc-800 bg-zinc-950 px-[clamp(2rem,3.6vw,4rem)] py-[clamp(1.3rem,2.4vh,2.4rem)] text-white lg:flex">
-          <div className="absolute inset-0 z-0 bg-gradient-to-br from-zinc-950 via-zinc-900/50 to-zinc-950" />
-          <div className="animate-blob absolute left-[-15%] top-[5%] z-0 h-[70%] w-[70%] rounded-full bg-rose-600/20 blur-[140px] mix-blend-screen" />
-          <div className="animate-blob animation-delay-2000 absolute right-[-10%] top-[-10%] z-0 h-[60%] w-[60%] rounded-full bg-pink-600/20 blur-[130px] mix-blend-screen" />
-          <div className="animate-blob animation-delay-4000 absolute bottom-[-20%] left-[10%] z-0 h-[80%] w-[80%] rounded-full bg-orange-500/10 blur-[160px] mix-blend-screen" />
+        <div className="relative hidden h-full w-1/2 border-r border-zinc-800 bg-zinc-950 px-[clamp(2rem,3.6vw,4rem)] py-[clamp(1.3rem,2.4vh,2.4rem)] text-white lg:flex">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-zinc-950 via-zinc-900/50 to-zinc-950" />
+            <div className="animate-blob absolute left-[-15%] top-[5%] z-0 h-[70%] w-[70%] rounded-full bg-rose-600/20 blur-[140px] mix-blend-screen" />
+            <div className="animate-blob animation-delay-2000 absolute right-[-10%] top-[-10%] z-0 h-[60%] w-[60%] rounded-full bg-pink-600/20 blur-[130px] mix-blend-screen" />
+            <div className="animate-blob animation-delay-4000 absolute bottom-[-20%] left-[10%] z-0 h-[80%] w-[80%] rounded-full bg-orange-500/10 blur-[160px] mix-blend-screen" />
 
-          <div className="pointer-events-none absolute inset-0 z-0">
-            {bubbles.map((bubble) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={bubble.id}
-                src={`https://api.dicebear.com/7.x/notionists/svg?seed=u${bubble.id}&backgroundColor=${bubble.color}`}
-                className="animate-bubble-up absolute bottom-[-50px] rounded-full border border-zinc-700/50 opacity-0 shadow-2xl"
-                style={{
-                  left: bubble.left,
-                  width: bubble.size,
-                  height: bubble.size,
-                  animationDelay: bubble.delay,
-                  animationDuration: bubble.dur,
-                }}
-                alt="avatar bubble"
-              />
-            ))}
+            <div className="pointer-events-none absolute inset-0 z-0">
+              {bubbles.map((bubble) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={bubble.id}
+                  src={`https://api.dicebear.com/7.x/notionists/svg?seed=u${bubble.id}&backgroundColor=${bubble.color}`}
+                  className="animate-bubble-up absolute bottom-[-50px] rounded-full border border-zinc-700/50 opacity-0 shadow-2xl"
+                  style={{
+                    left: bubble.left,
+                    width: bubble.size,
+                    height: bubble.size,
+                    animationDelay: bubble.delay,
+                    animationDuration: bubble.dur,
+                  }}
+                  alt="avatar bubble"
+                />
+              ))}
+            </div>
           </div>
 
           <div className="relative z-10 mx-auto grid h-full w-full max-w-[min(94%,58rem)] grid-rows-[auto,1fr,auto]">

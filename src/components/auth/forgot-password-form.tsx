@@ -200,7 +200,7 @@ export function ForgotPasswordForm() {
                     onKeyDown={(event) => onCodeKeyDown(index, event)}
                     onPaste={(event) => onCodePaste(index, event)}
                     disabled={isPending || isCompleted}
-                    className="h-10 w-full rounded-md border border-zinc-200 bg-transparent text-center text-lg font-medium outline-none transition-all focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                    className="h-10 w-full rounded-md border border-zinc-200 bg-transparent text-center text-lg font-medium outline-none transition-all focus:border-zinc-900 focus:shadow-[inset_0_0_0_1px_rgba(24,24,27,0.55)]"
                     required
                   />
                 ))}

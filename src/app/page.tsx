@@ -4,5 +4,6 @@ import { auth } from "@/auth";
 
 export default async function HomePage() {
   const session = await auth();
-  redirect(session ? "/dashboard" : "/login");
+  const fatalErrors = new Set(["MissingRefreshToken", "RefreshTokenExpired"]);
+  redirect(session?.user && session.accessToken && !fatalErrors.has(session.error ?? "") ? "/dashboard" : "/login");
 }

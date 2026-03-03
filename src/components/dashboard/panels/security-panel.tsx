@@ -11,7 +11,7 @@ export function SecurityPanel({ data }: SecurityPanelProps) {
     <section className="space-y-4">
       <h2 className="text-sm font-semibold text-ink-900">安全设置</h2>
 
-      <div className="glass overflow-hidden">
+      <div className="glass">
         <div className="border-b border-ink-200 bg-ink-100/60 px-4 py-2 text-xs text-ink-600">JWT Claims Snapshot</div>
         <div className="overflow-x-auto bg-ink-950 p-4 font-mono text-xs text-ink-200">
           <pre>{JSON.stringify({ sub: data.me.id, roles: data.me.roles, scopes: data.me.scopes }, null, 2)}</pre>

@@ -24,7 +24,7 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={300}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}

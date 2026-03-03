@@ -8,6 +8,15 @@ type RequestOptions = {
   baseUrl?: string;
 };
 
+export class ApiRequestError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+  }
+}
+
 function resolveBaseUrl(): string {
   return typeof window === "undefined" ? getServerUmsApiBaseUrl() : getPublicUmsApiBaseUrl();
 }
@@ -36,7 +45,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(payload?.error ?? `Request failed: ${response.status}`);
+    throw new ApiRequestError(response.status, payload?.error ?? `Request failed: ${response.status}`);
   }
 
   if (response.status === 204) {

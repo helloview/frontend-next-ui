@@ -21,8 +21,8 @@ export function Input({ label, type = "text", error, rightSlot, ...props }: Inpu
         type={type}
         className={`block w-full rounded-lg border bg-white px-3 py-2 text-base text-zinc-900 outline-none transition-all placeholder-zinc-400 shadow-sm md:text-[13px] ${
           error
-            ? "border-rose-500 focus:ring-1 focus:ring-rose-500"
-            : "border-zinc-200 focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+            ? "border-rose-500 focus:border-rose-500 focus:shadow-[inset_0_0_0_1px_rgba(244,63,94,0.45)]"
+            : "border-zinc-200 focus:border-rose-400 focus:shadow-[inset_0_0_0_1px_rgba(244,63,94,0.3)]"
         }`}
         {...props}
       />

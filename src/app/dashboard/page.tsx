@@ -22,21 +22,24 @@ function fallbackUserFromSession(session: Session): AuthUserProfile {
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user || !session.accessToken) {
+  const fatalErrors = new Set(["MissingRefreshToken", "RefreshTokenExpired"]);
+  if (!session?.user || fatalErrors.has(session.error ?? "")) {
     redirect("/login");
   }
 
   let me = fallbackUserFromSession(session);
-  try {
-    me = await getCurrentUser(session.accessToken);
-  } catch {
-    // fallback keeps dashboard usable when backend temporarily fails
+  if (session.accessToken) {
+    try {
+      me = await getCurrentUser(session.accessToken);
+    } catch {
+      // fallback keeps dashboard usable when backend temporarily fails
+    }
   }
 
   const canManageUsers = me.scopes.includes("rbac:manage");
   let users: AuthUserProfile[] = [me];
 
-  if (canManageUsers) {
+  if (session.accessToken) {
     try {
       const payload = await listUsers(session.accessToken);
       users = payload.items;

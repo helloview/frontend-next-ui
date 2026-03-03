@@ -41,6 +41,13 @@
     "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Segoe UI", "Helvetica Neue",
     sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --app-vh: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --app-vh: 100dvh;
+  }
 }
 
 .dark {
@@ -71,10 +78,76 @@
 }
 
 @layer base {
+  * {
+    @apply border-zinc-200;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    height: 100%;
+    min-height: 100%;
+  }
+
   body {
     font-family: var(--font-sans);
     background: var(--bg-white);
     color: var(--text-zinc-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    min-height: var(--app-vh);
+    overflow-x: hidden;
+  }
+
+  /* Cross-browser form baseline (avoid aggressive reset differences) */
+  input,
+  textarea,
+  button,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  input[type="search"] {
+    -webkit-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-results-button,
+  input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    min-height: 2.5rem;
+  }
+
+  input::-webkit-date-and-time-value {
+    text-align: inherit;
+  }
+
+  /* Safari Flexbox/Grid Fixes */
+  .flex, .grid {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  img {
+    height: auto;
+    max-width: 100%;
+    -webkit-user-drag: none;
   }
 
   code,
@@ -86,6 +159,42 @@
 }
 
 @layer utilities {
+  .app-screen {
+    min-height: var(--app-vh);
+  }
+
+  .app-screen-fixed {
+    height: var(--app-vh);
+  }
+
+  /* Standardized Scrollbars for Chrome/Safari */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-200 dark:bg-zinc-800 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-300 dark:bg-zinc-700;
+  }
+
+  /* Support for Firefox scrollbar styling */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.zinc.200') transparent;
+  }
+
+  .dark .custom-scrollbar {
+    scrollbar-color: theme('colors.zinc.800') transparent;
+  }
+  
   .logo-mark-animated {
     animation: logo-float 2.6s ease-in-out infinite;
     transform-origin: center;
@@ -110,6 +219,31 @@
 
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), 0);
+  }
+
+  .pl-safe {
+    padding-left: max(env(safe-area-inset-left), 0);
+  }
+
+  .pr-safe {
+    padding-right: max(env(safe-area-inset-right), 0);
   }
 
   .auth-creator-bg {
@@ -232,6 +366,30 @@
   .auth-card-enter-right {
     animation: auth-card-in-right 0.86s cubic-bezier(0.22, 0.61, 0.36, 1) both;
     animation-delay: 0.18s;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .custom-scrollbar,
+  .hide-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iOS Safari viewport fallback only (avoid desktop Safari height shrink) */
+@supports (-webkit-touch-callout: none) and (height: -webkit-fill-available) {
+  @media (hover: none) and (pointer: coarse) {
+    html,
+    body {
+      height: -webkit-fill-available;
+      min-height: -webkit-fill-available;
+    }
+
+    .app-screen,
+    .app-screen-fixed {
+      min-height: -webkit-fill-available;
+      height: -webkit-fill-available;
+    }
   }
 }
 
