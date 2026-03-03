@@ -5,6 +5,7 @@
 import {
   AlertCircle,
   Bell,
+  BookOpen,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -13,20 +14,26 @@ import {
   EyeOff,
   Loader2,
   LogOut,
+  Menu,
   Moon,
+  Plus,
   Settings,
   ShieldCheck,
+  Sparkles,
   Sun,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOut } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { BrandLogo, BrandLogoAnimated } from "@/components/brand/brand-logo";
+import { LibraryHubPanel } from "@/components/dashboard/panels/library-hub-panel";
+import { StudioWorkbenchPanel } from "@/components/dashboard/panels/studio-workbench";
 import { TodoWorkspace } from "@/components/dashboard/panels/todo-workspace";
 import type { DashboardData } from "@/components/dashboard/types";
+import { primaryRoleLabel, roleLabels, systemRoleValues } from "@/lib/role-labels";
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -76,24 +83,45 @@ const Input = ({
   icon?: React.ComponentType<{ className?: string }>;
   rightSlot?: React.ReactNode;
 }) => (
-  <div className="space-y-1.5">
-    {label ? <label className="block text-[13px] font-medium text-zinc-700">{label}</label> : null}
-    <div className="relative">
-      {Icon ? <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" /> : null}
-      {rightSlot ? <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">{rightSlot}</div> : null}
+  <div className="space-y-2">
+    {label ? <label className="block text-[11px] font-black uppercase tracking-widest text-zinc-400 px-1">{label}</label> : null}
+    <div className="relative group">
+      {Icon ? <Icon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-rose-500" /> : null}
+      {rightSlot ? <div className="absolute right-3 top-1/2 z-10 -translate-y-1/2">{rightSlot}</div> : null}
       <input
         type={type}
-        className={`block w-full rounded-lg border bg-white py-2 text-[13px] text-zinc-900 outline-none transition-all placeholder-zinc-400 shadow-sm ${
-          Icon ? "pl-9" : "pl-3"
-        } ${rightSlot ? "pr-10" : "pr-3"} ${error ? "border-rose-500 focus:ring-rose-500" : "border-zinc-200 focus:border-rose-400 focus:ring-rose-400"} focus:ring-1`}
+        className={`block w-full rounded-xl border bg-zinc-50/50 py-2.5 text-sm font-bold text-zinc-900 outline-none transition-all placeholder-zinc-300 dark:bg-zinc-900/50 dark:text-zinc-100 ${
+          Icon ? "pl-11" : "pl-4"
+        } ${rightSlot ? "pr-12" : "pr-4"} ${
+          error
+            ? "border-rose-500 ring-4 ring-rose-500/5"
+            : "border-zinc-200 focus:border-rose-400 focus:bg-white focus:shadow-xl focus:shadow-rose-500/5 dark:border-zinc-800 dark:focus:border-rose-900/50 dark:focus:bg-zinc-950"
+        }`}
         {...props}
       />
     </div>
     {error ? (
-      <p className="mt-1 flex items-center text-[12px] text-rose-500">
-        <AlertCircle className="mr-1 h-3 w-3" /> {error}
+      <p className="mt-1 flex items-center px-1 text-[11px] font-bold text-rose-500 animate-in fade-in slide-in-from-top-1">
+        <AlertCircle className="mr-1.5 h-3.5 w-3.5" /> {error}
       </p>
     ) : null}
+  </div>
+);
+
+const ReadonlyField = ({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) => (
+  <div className="space-y-2">
+    <p className="block text-[11px] font-black uppercase tracking-widest text-zinc-400 px-1">{label}</p>
+    <div className={`rounded-xl border border-zinc-100 bg-zinc-50/30 px-4 py-2.5 text-sm font-bold text-zinc-600 dark:border-zinc-800/50 dark:bg-zinc-900/20 dark:text-zinc-400 ${mono ? "font-mono text-[13px]" : ""}`}>
+      {value || "—"}
+    </div>
   </div>
 );
 
@@ -108,18 +136,18 @@ const Button = ({
   isLoading?: boolean;
 }) => {
   const baseStyle =
-    "flex select-none items-center justify-center rounded-lg px-4 py-2 text-[13px] font-medium transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50";
+    "flex select-none items-center justify-center rounded-xl px-5 py-2.5 text-sm font-bold transition-all active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40";
   const variants = {
-    primary: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm shadow-rose-200",
-    secondary: "bg-rose-50 text-rose-700 hover:bg-rose-100",
-    outline: "bg-white text-zinc-700 border border-zinc-200 hover:bg-rose-50 hover:text-rose-700 shadow-sm",
-    ghost: "bg-transparent text-zinc-600 hover:bg-rose-50 hover:text-rose-700",
-    danger: "bg-rose-600 text-white hover:bg-rose-700 shadow-sm",
+    primary: "bg-zinc-900 text-white hover:bg-rose-600 shadow-lg shadow-zinc-900/10 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-rose-500 dark:hover:text-white dark:shadow-none",
+    secondary: "bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20",
+    outline: "bg-white text-zinc-700 border border-zinc-200 hover:border-rose-200 hover:text-rose-600 shadow-sm dark:bg-zinc-950 dark:text-zinc-300 dark:border-zinc-800 dark:hover:border-rose-900/50",
+    ghost: "bg-transparent text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
+    danger: "bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-600/20",
   };
 
   return (
     <button className={`${baseStyle} ${variants[variant]} ${className}`} disabled={isLoading} {...props}>
-      {isLoading ? <Loader2 className="-ml-1 mr-2 h-4 w-4 animate-spin" /> : null}
+      {isLoading ? <Loader2 className="-ml-1 mr-2.5 h-4 w-4 animate-spin" /> : null}
       {children}
     </button>
   );
@@ -127,6 +155,16 @@ const Button = ({
 
 function TodoView({ storageNamespace }: { storageNamespace: string }) {
   return <TodoWorkspace storageNamespace={storageNamespace} />;
+}
+
+function StudioWorkbenchView({
+  ownerMe,
+  ownerDirectory,
+}: {
+  ownerMe: { id: string; nickname: string; avatarSeed?: string; avatarBackground?: string };
+  ownerDirectory: Array<{ id: string; nickname: string; avatarSeed?: string; avatarBackground?: string }>;
+}) {
+  return <StudioWorkbenchPanel ownerMe={ownerMe} ownerDirectory={ownerDirectory} />;
 }
 
 function SettingsView({
@@ -157,6 +195,7 @@ function SettingsView({
   const [isAvatarModalOpen, setAvatarModalOpen] = useState(false);
   const [draftAvatarSeed, setDraftAvatarSeed] = useState(avatarSeed);
   const [draftAvatarBackground, setDraftAvatarBackground] = useState(avatarBackground);
+  const primaryRole = primaryRoleLabel(user.roles) || "成员";
 
   const openAvatarModal = () => {
     setDraftAvatarSeed(avatarSeed);
@@ -165,100 +204,141 @@ function SettingsView({
   };
 
   const closeAvatarModal = () => {
-    if (isSavingAvatar) {
-      return;
-    }
+    if (isSavingAvatar) return;
     setAvatarModalOpen(false);
   };
 
   const confirmAvatar = async () => {
     const ok = await onSaveAvatar(draftAvatarSeed, draftAvatarBackground);
-    if (ok) {
-      setAvatarModalOpen(false);
-    }
+    if (ok) setAvatarModalOpen(false);
   };
 
   return (
-    <div className="max-w-2xl animate-in fade-in space-y-8 pb-20 duration-500 md:pb-0">
-      <div>
-        <h2 className="mb-1 text-lg font-semibold text-zinc-900">账号资料</h2>
-        <p className="text-[13px] text-zinc-500">管理您的基础个人信息与系统偏好设置。</p>
-      </div>
-
-      <div className="flex flex-col items-start gap-6 border-y border-zinc-200 py-6 sm:flex-row">
-        <div className="w-full sm:w-1/3">
-          <h3 className="text-[14px] font-medium text-zinc-900">个人头像</h3>
-        </div>
-        <div className="w-full space-y-4 sm:w-2/3">
-          <div className="flex items-center gap-3">
-            <img src={user.avatar} className="h-14 w-14 rounded-full border border-zinc-200 shadow-sm" alt="Avatar" />
+    <div className="mx-auto w-full max-w-[1200px] animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 pb-24 md:pb-8">
+      {/* Profile Header Card */}
+      <section className="relative overflow-hidden rounded-[28px] border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:p-6">
+        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-rose-500/5 blur-3xl dark:bg-rose-500/10" />
+        <div className="relative flex flex-col items-center gap-6 text-center md:flex-row md:text-left">
+          <div className="relative group cursor-pointer" onClick={openAvatarModal}>
+            <img src={user.avatar} className="h-20 w-20 rounded-full border-4 border-zinc-50 shadow-xl transition-transform group-hover:scale-105 dark:border-zinc-900" alt="Avatar" />
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+              <Plus className="h-5 w-5 text-white" />
+            </div>
           </div>
-          <Button variant="outline" className="h-9 w-auto px-3 text-[12px]" onClick={openAvatarModal}>
-            更换头像
+          <div className="min-w-0 flex-1 space-y-1">
+            <h2 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">{nickname || "未设置昵称"}</h2>
+            <div className="flex flex-wrap justify-center gap-2 md:justify-start">
+              <span className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">{user.email}</span>
+              <span className="inline-flex items-center rounded-full bg-rose-50 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{primaryRole}</span>
+            </div>
+          </div>
+          <Button variant="outline" className="h-9 w-full md:w-auto" onClick={openAvatarModal}>
+            个性化形象
           </Button>
         </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Basic Info Column */}
+        <section className="lg:col-span-2 space-y-5 rounded-[28px] border border-zinc-100 bg-zinc-50/30 p-5 dark:border-zinc-800 dark:bg-zinc-900/20 md:p-6">
+          <div>
+            <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100">基础信息设置</h3>
+            <p className="mt-0.5 text-[11px] font-medium text-zinc-500">更新您的公开展示名称与其他账号属性。</p>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Input 
+                label="公开昵称" 
+                value={nickname} 
+                onChange={(event) => onNicknameChange(event.target.value)} 
+                placeholder="起一个好听的名字吧"
+              />
+            </div>
+            <ReadonlyField label="主身份标识" value={primaryRole} />
+            <ReadonlyField label="系统唯一编号" value={user.id} mono />
+            <div className="md:col-span-2">
+              <ReadonlyField label="关联邮箱地址" value={user.email} />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <Button 
+              className="w-full md:w-auto min-w-[130px]" 
+              isLoading={isSavingProfile} 
+              onClick={onSaveProfile}
+              disabled={nickname.trim() === (user.name || "").trim()}
+            >
+              保存资料修改
+            </Button>
+          </div>
+        </section>
+
+        {/* Status/Activity Column */}
+        <section className="space-y-5 rounded-[28px] border border-zinc-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:p-6">
+          <div>
+            <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100">账号当前状态</h3>
+            <p className="mt-0.5 text-[11px] font-medium text-zinc-500">查看您的访问权限与安全统计。</p>
+          </div>
+
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between rounded-xl bg-zinc-50 p-3.5 dark:bg-zinc-900/50">
+              <span className="text-[11px] font-bold text-zinc-500">权限节点数</span>
+              <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">{user.scopes.length}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-zinc-50 p-3.5 dark:bg-zinc-900/50">
+              <span className="text-[11px] font-bold text-zinc-500">安全等级</span>
+              <span className="flex items-center gap-1.5 text-sm font-black text-emerald-500">
+                <ShieldCheck size={14} /> 极高
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-zinc-50 p-3.5 dark:bg-zinc-900/50">
+              <span className="text-[11px] font-bold text-zinc-500">会话版本</span>
+              <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">v1.0.4</span>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div className="flex flex-col items-start gap-6 border-b border-zinc-200 pb-6 sm:flex-row">
-        <div className="w-full sm:w-1/3">
-          <h3 className="text-[14px] font-medium text-zinc-900">基础信息</h3>
-        </div>
-        <div className="w-full space-y-4 sm:w-2/3">
-          <Input label="昵称" value={nickname} onChange={(event) => onNicknameChange(event.target.value)} />
-          <Input label="登录邮箱（只读）" defaultValue={user.email} disabled />
-          <Button className="w-auto" isLoading={isSavingProfile} onClick={onSaveProfile}>
-            保存更改
-          </Button>
-        </div>
-      </div>
-
+      {/* Avatar Customization Modal - M3 Standard */}
       {isAvatarModalOpen ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-[520px] rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-[560px] rounded-[40px] border border-zinc-200 bg-white p-8 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 animate-in zoom-in-95 duration-300">
+            <div className="mb-8 flex items-center justify-between">
               <div>
-                <h3 className="text-[16px] font-semibold text-zinc-900">选择头像</h3>
-                <p className="text-[12px] text-zinc-500">头像与背景可分别选择，保存后会写入数据库。</p>
+                <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100">自定义形象</h3>
+                <p className="mt-1 text-[12px] font-medium text-zinc-500">通过不同的种子与背景色彩组合，打造独特的标识。</p>
               </div>
-              <button
-                type="button"
-                onClick={closeAvatarModal}
-                className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-zinc-700"
-              >
-                <X className="h-4 w-4" />
+              <button onClick={closeAvatarModal} className="rounded-full bg-zinc-100 p-2 text-zinc-400 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 transition-colors">
+                <X size={20} />
               </button>
             </div>
 
-            <div className="mb-4 flex items-center gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-              <img
-                src={buildNotionistsAvatar(draftAvatarSeed, draftAvatarBackground)}
-                className="h-16 w-16 rounded-full border border-zinc-200 bg-white"
-                alt="Avatar Preview"
-              />
-              <div className="text-[12px] text-zinc-500">头像预览</div>
+            <div className="mb-10 flex flex-col items-center gap-6 rounded-[32px] bg-zinc-50 p-8 dark:bg-zinc-900/50">
+              <div className="relative">
+                <img
+                  src={buildNotionistsAvatar(draftAvatarSeed, draftAvatarBackground)}
+                  className="h-32 w-32 rounded-full border-4 border-white bg-white shadow-2xl dark:border-zinc-800 object-cover"
+                  alt="Avatar Preview"
+                />
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-8">
               <div>
-                <p className="mb-2 text-[12px] font-medium text-zinc-700">头像样式</p>
-                <div className="grid grid-cols-6 gap-2">
+                <p className="mb-4 px-1 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">选择角色种子</p>
+                <div className="grid grid-cols-6 gap-3">
                   {avatarOptions.map((option) => {
                     const isActive = option.seed === draftAvatarSeed;
                     return (
                       <button
                         key={option.seed}
-                        type="button"
-                        aria-label={`选择头像 ${option.seed}`}
                         onClick={() => setDraftAvatarSeed(option.seed)}
-                        className={`inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full p-0 leading-none transition-all ${
-                          isActive ? "ring-2 ring-rose-400 ring-offset-2" : "ring-1 ring-zinc-200 hover:ring-zinc-300"
+                        className={`inline-flex aspect-square items-center justify-center rounded-2xl transition-all active:scale-90 ${
+                          isActive ? "ring-2 ring-rose-500 ring-offset-4 ring-offset-white dark:ring-offset-zinc-950" : "bg-zinc-100/50 dark:bg-zinc-900 hover:bg-zinc-100"
                         }`}
                       >
-                        <img
-                          src={buildNotionistsAvatar(option.seed, draftAvatarBackground)}
-                          className="block h-10 w-10 rounded-full"
-                          alt=""
-                        />
+                        <img src={buildNotionistsAvatar(option.seed, draftAvatarBackground)} className="h-full w-full rounded-full object-cover" alt="" />
                       </button>
                     );
                   })}
@@ -266,17 +346,15 @@ function SettingsView({
               </div>
 
               <div>
-                <p className="mb-2 text-[12px] font-medium text-zinc-700">背景色</p>
-                <div className="grid grid-cols-8 gap-2">
+                <p className="mb-4 px-1 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">选择氛围色</p>
+                <div className="grid grid-cols-8 gap-3">
                   {backgroundOptions.map((color) => {
                     const isActive = color === draftAvatarBackground;
                     return (
                       <button
                         key={color}
-                        type="button"
-                        aria-label={`选择背景 ${color}`}
                         onClick={() => setDraftAvatarBackground(color)}
-                        className={`h-7 w-7 rounded-full border transition-all ${isActive ? "scale-110 border-rose-400 ring-2 ring-rose-200" : "border-zinc-200 hover:scale-105"}`}
+                        className={`h-8 w-8 rounded-full border-2 transition-all active:scale-90 ${isActive ? "scale-110 border-zinc-900 ring-2 ring-rose-500/20 dark:border-white" : "border-transparent hover:scale-105"}`}
                         style={{ backgroundColor: `#${color}` }}
                       />
                     );
@@ -285,12 +363,12 @@ function SettingsView({
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="outline" className="w-auto px-3" onClick={closeAvatarModal} disabled={isSavingAvatar}>
+            <div className="mt-10 flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-2xl" onClick={closeAvatarModal} disabled={isSavingAvatar}>
                 取消
               </Button>
-              <Button type="button" className="w-auto px-3" isLoading={isSavingAvatar} onClick={confirmAvatar}>
-                保存头像
+              <Button className="flex-[2] rounded-2xl" isLoading={isSavingAvatar} onClick={confirmAvatar}>
+                应用并保存形象
               </Button>
             </div>
           </div>
@@ -326,28 +404,30 @@ function SecurityView({
   const confirmMatches = confirmPassword.length > 0 && confirmPassword === newPassword;
 
   const strength = [newPasswordHasLength, newPasswordHasLetter, newPasswordHasNumber].filter(Boolean).length;
-  const strengthLabel = strength <= 1 ? "弱" : strength === 2 ? "中等" : "合规";
+  const strengthLabel = strength <= 1 ? "安全性：低" : strength === 2 ? "安全性：中" : "安全性：极高";
   const policyReady = newPasswordHasLength && newPasswordHasLetter && newPasswordHasNumber;
   const canSubmit =
     currentPassword.trim() !== "" && policyReady && newPasswordDiffers && confirmMatches && !isChangingPassword;
 
   const confirmMismatch = confirmPassword.length > 0 && confirmPassword !== newPassword;
-  const currentPasswordError = passwordError.toLowerCase().includes("current password") ? passwordError : "";
+  const currentPasswordError = passwordError.toLowerCase().includes("current password") ? "当前密码输入有误" : "";
   const generalError = currentPasswordError ? "" : passwordError;
 
   const passwordRules = [
     { label: "至少 8 位字符", ok: newPasswordHasLength },
     { label: "包含英文字母", ok: newPasswordHasLetter },
     { label: "包含数字", ok: newPasswordHasNumber },
-    { label: "不能与当前密码相同", ok: newPasswordDiffers && newPassword.length > 0 },
+    { label: "不同于当前密码", ok: newPasswordDiffers && newPassword.length > 0 },
     { label: "确认密码一致", ok: confirmMatches },
   ];
+  const localizedRoles = roleLabels(user.roles);
+  const rawRoles = systemRoleValues(user.roles);
 
   const toggleSlot = (shown: boolean, onToggle: () => void) => (
     <button
       type="button"
       onClick={onToggle}
-      className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+      className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
       aria-label={shown ? "隐藏密码" : "显示密码"}
     >
       {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -389,136 +469,140 @@ function SecurityView({
   };
 
   return (
-    <div className="max-w-3xl animate-in fade-in space-y-8 pb-20 duration-500 md:pb-0">
+    <div className="mx-auto w-full max-w-[1200px] animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4 pb-24 md:pb-8">
       <div>
-        <h2 className="mb-1 text-lg font-semibold text-zinc-900">安全与权限访问</h2>
-        <p className="text-[13px] text-zinc-500">按照零信任实践管理当前账号登录凭证与会话安全。</p>
+        <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 leading-tight">安全与权限访问</h2>
+        <p className="text-[12px] font-medium text-zinc-500">管理您的登录凭证、系统权限与会话安全风险。</p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 shadow-sm">
-        <div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2">
-          <div className="flex gap-1.5">
-            <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-            <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-          </div>
-          <span className="ml-2 text-[11px] font-mono text-zinc-500">JWT 解析数据 (安全控制台只读展示)</span>
-        </div>
-        <div className="overflow-x-auto bg-zinc-950 p-4 font-mono text-[12px] leading-relaxed text-zinc-300">
-          <div className="flex">
-            <span className="w-16 text-pink-400">iss:</span>
-            <span className="text-emerald-300">&quot;https://auth.studio.internal&quot;</span>
-          </div>
-          <div className="flex">
-            <span className="w-16 text-pink-400">sub:</span>
-            <span className="text-emerald-300">&quot;{user.id}&quot;</span>
-          </div>
-          <div className="flex">
-            <span className="w-16 text-pink-400">roles:</span>
-            <span className="text-blue-300">[{user.roles.map((role) => `"${role}"`).join(", ")}]</span>
-          </div>
-          <div className="flex">
-            <span className="w-16 text-pink-400">scopes:</span>
-            <span className="text-blue-300">[{user.scopes.map((scope) => `"${scope}"`).join(", ")}]</span>
-          </div>
-          <div className="flex">
-            <span className="w-16 text-pink-400">exp:</span>
-            <span className="text-amber-300">1739982000</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="border-b border-zinc-100 px-5 py-4">
-          <h3 className="text-[14px] font-semibold text-zinc-900">修改登录密码</h3>
-          <p className="mt-1 text-[12px] text-zinc-500">
-            更新后将立即使当前登录状态失效，请使用新密码重新登录。
-          </p>
-        </div>
-
-        <div className="space-y-5 px-5 py-4">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-800">
-            为保障账号安全，密码更新后会吊销历史刷新令牌并要求重新登录。
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        {/* Password Form Column */}
+        <section className="lg:col-span-8 space-y-6 rounded-[28px] border border-zinc-100 bg-zinc-50/30 p-5 dark:border-zinc-800 dark:bg-zinc-900/20 md:p-6">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100">重置登录密码</h3>
+              <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+                <ShieldCheck size={12} className="text-emerald-500" />
+                安全受限操作
+              </div>
+            </div>
+            <p className="text-[11px] font-medium leading-relaxed text-amber-600 dark:text-amber-400">
+              为保障您的账号安全，密码更新后将立即吊销所有历史刷新令牌，并要求您在当前设备重新登录。
+            </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-3">
             <Input
               label="当前密码"
               type={showCurrentPassword ? "text" : "password"}
               autoComplete="current-password"
+              placeholder="••••••••"
               value={currentPassword}
-              onChange={(event) => {
-                setPasswordError("");
-                setCurrentPassword(event.target.value);
-              }}
-              rightSlot={toggleSlot(showCurrentPassword, () => setShowCurrentPassword((value) => !value))}
+              onChange={(event) => { setPasswordError(""); setCurrentPassword(event.target.value); }}
+              rightSlot={toggleSlot(showCurrentPassword, () => setShowCurrentPassword((v) => !v))}
               error={currentPasswordError || undefined}
             />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="新密码"
-                type={showNewPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(event) => {
-                  setPasswordError("");
-                  setNewPassword(event.target.value);
-                }}
-                rightSlot={toggleSlot(showNewPassword, () => setShowNewPassword((value) => !value))}
-              />
-              <Input
-                label="确认新密码"
-                type={showConfirmPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => {
-                  setPasswordError("");
-                  setConfirmPassword(event.target.value);
-                }}
-                rightSlot={toggleSlot(showConfirmPassword, () => setShowConfirmPassword((value) => !value))}
-                error={confirmMismatch ? "两次输入的新密码不一致" : undefined}
-              />
-            </div>
+            <Input
+              label="新设密码"
+              type={showNewPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={newPassword}
+              onChange={(event) => { setPasswordError(""); setNewPassword(event.target.value); }}
+              rightSlot={toggleSlot(showNewPassword, () => setShowNewPassword((v) => !v))}
+            />
+            <Input
+              label="重复新密码"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(event) => { setPasswordError(""); setConfirmPassword(event.target.value); }}
+              rightSlot={toggleSlot(showConfirmPassword, () => setShowConfirmPassword((v) => !v))}
+              error={confirmMismatch ? "两次输入的新密码不一致" : undefined}
+            />
           </div>
 
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 px-3 py-3">
-            <div className="mb-2 flex items-center justify-between text-[12px] font-medium text-zinc-700">
-              <span>密码强度</span>
-              <span>{strengthLabel}</span>
+          <div className="rounded-3xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">密码合规强度</span>
+              <span className={`text-[11px] font-black uppercase tracking-widest ${strength >= 3 ? "text-emerald-500" : strength === 2 ? "text-amber-500" : "text-rose-500"}`}>{strengthLabel}</span>
             </div>
-            <div className="mb-3 flex h-1.5 gap-1">
-              <div className={`flex-1 rounded-full ${strength >= 1 ? "bg-rose-500" : "bg-zinc-200"}`} />
-              <div className={`flex-1 rounded-full ${strength >= 2 ? "bg-rose-300" : "bg-zinc-200"}`} />
-              <div className={`flex-1 rounded-full ${strength >= 3 ? "bg-emerald-500" : "bg-zinc-200"}`} />
+            <div className="mb-6 flex h-1.5 gap-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900">
+              <div className={`h-full transition-all duration-500 ${strength >= 1 ? "w-1/3 bg-rose-500" : "w-0"}`} />
+              <div className={`h-full transition-all duration-500 ${strength >= 2 ? "w-1/3 bg-amber-500" : "w-0"}`} />
+              <div className={`h-full transition-all duration-500 ${strength >= 3 ? "w-1/3 bg-emerald-500" : "w-0"}`} />
             </div>
-            <div className="grid gap-1.5 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {passwordRules.map((rule) => (
-                <div key={rule.label} className="flex items-center gap-2 text-[12px] text-zinc-600">
-                  <span
-                    className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
-                      rule.ok ? "border-emerald-300 bg-emerald-50 text-emerald-600" : "border-zinc-200 bg-white text-zinc-300"
-                    }`}
-                  >
-                    <Check className="h-3 w-3" />
-                  </span>
-                  <span>{rule.label}</span>
+                <div key={rule.label} className="flex items-center gap-2.5">
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${rule.ok ? "border-emerald-500 bg-emerald-500 text-white" : "border-zinc-200 bg-transparent text-zinc-200 dark:border-zinc-800"}`}>
+                    <Check size={12} strokeWidth={4} />
+                  </div>
+                  <span className={`text-[12px] font-bold ${rule.ok ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400"}`}>{rule.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {generalError ? (
-            <p className="flex items-center text-[12px] text-rose-600">
-              <AlertCircle className="mr-1 h-3.5 w-3.5" /> {generalError}
-            </p>
-          ) : null}
+          {generalError && (
+            <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-[12px] font-bold text-rose-600 animate-in shake-1 dark:bg-rose-950/20">
+              <AlertCircle size={16} /> {generalError}
+            </div>
+          )}
 
-          <div className="flex justify-end">
-            <Button className="w-auto px-4" isLoading={isChangingPassword} onClick={submitPasswordChange} disabled={!canSubmit}>
-              更新密码并重新登录
+          <div className="flex justify-end pt-4">
+            <Button className="w-full md:w-auto min-w-[200px]" isLoading={isChangingPassword} onClick={submitPasswordChange} disabled={!canSubmit}>
+              确认修改并强制重新登录
             </Button>
           </div>
+        </section>
+
+        {/* Sidebar Info Columns */}
+        <div className="lg:col-span-4 space-y-6">
+          <section className="space-y-5 rounded-[28px] border border-zinc-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:p-7">
+            <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100">JWT 会话负载信息</h3>
+            <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <div className="bg-zinc-50 px-4 py-1.5 dark:bg-zinc-900">
+                <span className="text-[9px] font-mono font-black uppercase tracking-widest text-zinc-400">Claims Inspection</span>
+              </div>
+              <div className="space-y-2 bg-zinc-950 p-4 font-mono text-[11px] leading-relaxed text-zinc-400">
+                <div className="flex"><span className="w-12 text-rose-400">iss:</span><span className="text-emerald-400">"studio.internal"</span></div>
+                <div className="flex"><span className="w-12 text-rose-400">sub:</span><span className="text-emerald-400">"{user.id.slice(0, 12)}..."</span></div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="w-12 text-rose-400">roles:</span>
+                  <div className="flex flex-wrap gap-1 pl-4">
+                    {rawRoles.map(r => <span key={r} className="text-blue-400">"{r}",</span>)}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="w-12 text-rose-400">scopes:</span>
+                  <div className="flex flex-wrap gap-1 pl-4">
+                    {user.scopes.slice(0, 4).map(s => <span key={s} className="text-blue-400">"{s}",</span>)}
+                    <span className="text-zinc-600">...and {user.scopes.length - 4} more</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-5 rounded-[28px] border border-zinc-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:p-7">
+            <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100">角色与权限清单</h3>
+            <div className="space-y-4">
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">核准角色</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {localizedRoles.map(r => <span key={r} className="rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-0.5 text-[10px] font-black text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">{r}</span>)}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">有效权限范围 ({user.scopes.length})</p>
+                <div className="max-h-40 overflow-y-auto space-y-1 pr-2 custom-scrollbar">
+                  {user.scopes.map(s => <div key={s} className="rounded-lg bg-zinc-50 px-3 py-1 text-[10px] font-bold text-zinc-500 dark:bg-zinc-900">{s}</div>)}
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -526,14 +610,18 @@ function SecurityView({
 }
 
 export function DashboardShell({ data }: DashboardShellProps) {
-  const [activeNav, setActiveNav] = useState<"todos" | "profile" | "security">("todos");
+  const [activeNav, setActiveNav] = useState<"studio" | "library" | "todos" | "profile" | "security" | "rbac">("studio");
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [nickname, setNickname] = useState(data.me.nickname || data.me.email || "未知用户");
   const [avatarSeed, setAvatarSeed] = useState(data.me.avatar_seed || `${data.me.id}-core`);
   const [avatarBackground, setAvatarBackground] = useState(data.me.avatar_background || "f4f4f5");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const mobileDrawerCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileDrawerId = "dashboard-mobile-sidebar";
 
   const avatarOptions = useMemo<AvatarOption[]>(
     () => [
@@ -677,15 +765,21 @@ export function DashboardShell({ data }: DashboardShellProps) {
     }),
     [avatarBackground, avatarSeed, data.me, nickname],
   );
+  const userRoleLabel = primaryRoleLabel(user.roles) || "成员";
 
   const navTitles = {
-    todos: "Todo 任务",
+    studio: "创作工作台",
+    library: "资料库",
+    todos: "待办任务",
     profile: "个人资料",
     security: "安全设置",
+    rbac: "用户管理",
   } as const;
 
   const mainNavItems = [
-    { id: "todos" as const, label: "Todo 任务", icon: CheckSquare },
+    { id: "studio" as const, label: "创作工作台", icon: Sparkles },
+    { id: "library" as const, label: "资料库", icon: BookOpen },
+    { id: "todos" as const, label: "待办任务", icon: CheckSquare },
   ];
 
   const settingsItems = [
@@ -693,10 +787,85 @@ export function DashboardShell({ data }: DashboardShellProps) {
     { id: "security" as const, label: "安全设置", icon: ShieldCheck },
   ];
 
+  const adminItems = data.canManageUsers ? [{ id: "rbac" as const, label: "用户管理", icon: Settings }] : [];
+  const mobileNavItems = [...settingsItems, ...adminItems];
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const html = document.documentElement;
+    const originalOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = html.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    html.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      html.style.overflow = originalHtmlOverflow;
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const previousFocusedElement = document.activeElement as HTMLElement | null;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    const focusTimer = window.setTimeout(() => {
+      mobileDrawerCloseButtonRef.current?.focus();
+    }, 0);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleEscape);
+      previousFocusedElement?.focus?.();
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const openMobileMenu = () => {
+    setIsMobileMenuOpen(true);
+  };
+
+  const handleMobileNavSelect = (next: "studio" | "library" | "todos" | "profile" | "security" | "rbac") => {
+    setActiveNav(next);
+    closeMobileMenu();
+  };
+
+  const handleMobileAvatarClick = () => {
+    setActiveNav("profile");
+    closeMobileMenu();
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden bg-white font-sans text-zinc-900 selection:bg-rose-200 selection:text-rose-900">
+    <div className="flex h-[100svh] min-h-screen w-full min-w-0 overflow-hidden bg-white font-sans text-zinc-900 selection:bg-rose-200 selection:text-rose-900">
       <aside
-        className={`hidden h-full shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/50 transition-[width] duration-300 md:flex ${
+        className={`hidden h-[100svh] min-h-screen shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/50 transition-[width] duration-300 md:flex ${
           isSidebarCollapsed ? "w-[88px]" : "w-64"
         }`}
       >
@@ -790,7 +959,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
               {!isSidebarCollapsed ? (
                 <div className="flex flex-col">
                   <span className="text-[13px] font-medium text-zinc-900">{user.name}</span>
-                  <span className="text-[11px] text-zinc-500">系统管理员</span>
+                  <span className="text-[11px] text-zinc-500">{userRoleLabel}</span>
                 </div>
               ) : null}
             </div>
@@ -821,39 +990,135 @@ export function DashboardShell({ data }: DashboardShellProps) {
         </div>
       </aside>
 
-      <header className="absolute left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-zinc-200 bg-white/80 px-4 backdrop-blur-md md:hidden">
-        <BrandLogoAnimated className="gap-2.5" logoSize={22} />
-        <img src={user.avatar} className="h-7 w-7 rounded-full border border-zinc-200" onClick={() => setActiveNav("profile")} alt="" />
-      </header>
+      {/* Mobile Drawer Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-sm transition-all animate-in fade-in duration-300 md:hidden dark:bg-black/60" 
+          onClick={closeMobileMenu}
+        />
+      )}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-zinc-200 bg-white px-2 py-2 pb-safe md:hidden">
-        {[...mainNavItems, { id: "settings_mobile", label: "设置", icon: Settings }].map((item) => {
-          const isActive =
-            activeNav === item.id ||
-            (item.id === "settings_mobile" && (activeNav === "profile" || activeNav === "security"));
-          const handleClick = () => {
-            const nextNav = item.id === "settings_mobile" ? "profile" : item.id;
-            setActiveNav(nextNav as "todos" | "profile" | "security");
-          };
-          return (
-            <button
-              key={item.id}
-              onClick={handleClick}
-              className={`flex flex-1 flex-col items-center justify-center rounded-xl py-1 transition-colors ${isActive ? "text-rose-600" : "text-zinc-400"}`}
+      {/* Mobile Sidebar Drawer - Refined UI with Dark Mode */}
+      <aside
+        id={mobileDrawerId}
+        role="dialog"
+        aria-modal="true"
+        aria-label="移动端侧边栏菜单"
+        className={`fixed inset-y-0 left-0 z-[60] flex w-[84vw] max-w-[320px] flex-col bg-white transition-transform duration-300 ease-out md:hidden dark:bg-zinc-950 dark:border-r dark:border-zinc-800/50 ${
+          isMobileMenuOpen ? "translate-x-0 shadow-[20px_0_80px_-10px_rgba(0,0,0,0.15)] dark:shadow-none" : "-translate-x-full"
+        } will-change-transform`}
+      >
+        <div className="flex h-[72px] items-center justify-between border-b border-zinc-100/50 px-6 dark:border-zinc-800/50">
+          <BrandLogo logoSize={26} className="origin-left dark:text-white" textClassName="font-black dark:text-white" />
+          <button
+            ref={mobileDrawerCloseButtonRef}
+            onClick={closeMobileMenu}
+            className="group flex h-10 w-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-500 transition-all active:scale-90 hover:bg-rose-50 hover:text-rose-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+            aria-label="关闭菜单"
+          >
+            <X className="h-5 w-5 transition-transform group-hover:rotate-90" />
+          </button>
+        </div>
+
+        <div className="hide-scrollbar flex-1 space-y-8 overflow-y-auto px-4 py-8">
+          <section>
+            <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">工作空间</p>
+            <nav className="space-y-1.5">
+              {mainNavItems.map(item => {
+                const isActive = activeNav === item.id;
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => handleMobileNavSelect(item.id)} 
+                    className={`group relative flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97] ${
+                      isActive 
+                        ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 dark:bg-rose-600 dark:text-white dark:shadow-rose-600/20" 
+                        : "text-zinc-800 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900/50 dark:hover:text-white"
+                    }`}
+                  >
+                    <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-rose-400 dark:text-white" : "text-zinc-600 dark:text-zinc-300"}`} />
+                    {item.label}
+                    {isActive && <div className="absolute right-4 h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse dark:bg-white" />}
+                  </button>
+                );
+              })}
+            </nav>
+          </section>
+
+          <section>
+            <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">管理与安全</p>
+            <nav className="space-y-1.5">
+              {mobileNavItems.map(item => {
+                const isActive = activeNav === item.id;
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => handleMobileNavSelect(item.id)} 
+                    className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97] ${
+                      isActive 
+                        ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 dark:bg-rose-600 dark:text-white dark:shadow-rose-600/20" 
+                        : "text-zinc-800 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900/50 dark:hover:text-white"
+                    }`}
+                  >
+                    <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-rose-400 dark:text-white" : "text-zinc-600 dark:text-zinc-300"}`} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </section>
+        </div>
+
+        <div className="mt-auto border-t border-zinc-100/50 p-6 bg-zinc-50/30 dark:border-zinc-800/50 dark:bg-zinc-900/20">
+          <div className="flex items-center gap-4 rounded-[24px] bg-white border border-zinc-100 p-4 shadow-sm dark:bg-zinc-950 dark:border-zinc-800/80">
+            <div className="relative">
+              <img src={user.avatar} className="h-12 w-12 rounded-full border-2 border-zinc-50 bg-zinc-100 object-cover dark:border-zinc-900 dark:bg-zinc-800" alt="" />
+              <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-zinc-950" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-black tracking-tight text-zinc-900 dark:text-zinc-100">{user.name}</p>
+              <p className="truncate text-[10px] font-black uppercase tracking-widest text-zinc-400/80 dark:text-zinc-500">{userRoleLabel}</p>
+            </div>
+            <button 
+              onClick={() => signOut({ callbackUrl: "/login" })} 
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-all active:scale-90 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
+              title="退出登录"
             >
-              <div className={`mb-0.5 rounded-full p-1.5 transition-colors ${isActive ? "bg-rose-50" : "bg-transparent"}`}>
-                <item.icon className="h-5 w-5" />
-              </div>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <LogOut className="h-5 w-5" />
             </button>
-          );
-        })}
-      </nav>
+          </div>
+        </div>
+      </aside>
 
-      <main className="relative flex flex-1 flex-col overflow-hidden bg-white pt-14 md:pt-0">
-        <div className="hidden h-14 shrink-0 items-center justify-between border-b border-zinc-100 px-8 md:flex">
-          <div className="flex items-center text-[13px] font-medium text-zinc-500">
-            <span className="text-zinc-900">{navTitles[activeNav]}</span>
+      {/* Main Content Area - Adjust Padding for Floating Header */}
+      <main className="relative flex h-[100svh] min-h-screen min-h-0 flex-1 flex-col bg-white pt-[calc(env(safe-area-inset-top)+76px)] md:pt-0 dark:bg-zinc-950">
+        {/* Mobile Top Header - Floating Glass Style */}
+        <header className="fixed left-0 right-0 top-0 z-40 flex h-[calc(env(safe-area-inset-top)+72px)] shrink-0 items-end justify-between px-4 pb-3 md:hidden">
+          <div className="flex h-12 w-full items-center justify-between rounded-full border border-zinc-200 bg-white/80 px-2 pr-4 shadow-[0_8px_32px_-10px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-zinc-800/50 dark:bg-zinc-900/70 dark:shadow-none">
+            <div className="flex items-center gap-1">
+              <button
+                ref={mobileMenuButtonRef}
+                onClick={openMobileMenu}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600 transition-all active:scale-90 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                aria-expanded={isMobileMenuOpen}
+                aria-controls={mobileDrawerId}
+                aria-label="打开菜单"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </div>
+            <img
+              src={user.avatar}
+              className="h-8 w-8 cursor-pointer rounded-full border-2 border-zinc-100 bg-white shadow-sm transition-transform active:scale-90 dark:border-zinc-700 dark:bg-zinc-900"
+              onClick={handleMobileAvatarClick}
+              alt="个人资料"
+            />
+          </div>
+        </header>
+
+        <div className="hidden h-14 shrink-0 items-center justify-between border-b border-zinc-100 px-8 md:flex dark:border-zinc-800/50">
+          <div className="flex items-center text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
+            <span className="text-zinc-900 dark:text-zinc-100">{navTitles[activeNav]}</span>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
@@ -863,8 +1128,25 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </div>
         </div>
 
-        <div className="hide-scrollbar flex-1 overflow-y-auto p-4 sm:p-8">
-          <div className="mx-auto max-w-[1000px]">
+        <div className="hide-scrollbar flex-1 min-h-0 overflow-y-auto p-3 pt-2 sm:p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-[1800px]">
+            {activeNav === "studio" ? (
+              <StudioWorkbenchView
+                ownerMe={{
+                  id: data.me.id,
+                  nickname: data.me.nickname,
+                  avatarSeed: data.me.avatar_seed,
+                  avatarBackground: data.me.avatar_background,
+                }}
+                ownerDirectory={data.users.map((item) => ({
+                  id: item.id,
+                  nickname: item.nickname || item.email || "未命名用户",
+                  avatarSeed: item.avatar_seed,
+                  avatarBackground: item.avatar_background,
+                }))}
+              />
+            ) : null}
+            {activeNav === "library" ? <LibraryHubPanel /> : null}
             {activeNav === "todos" ? <TodoView storageNamespace={data.me.id} /> : null}
             {activeNav === "profile" ? (
               <SettingsView

@@ -10,7 +10,7 @@ export function ProfilePanel({ data }: ProfilePanelProps) {
     <section className="max-w-2xl space-y-4">
       <h2 className="text-sm font-semibold text-ink-900">个人资料</h2>
       <div className="glass space-y-4 p-5">
-        <Field label="用户 ID" value={data.me.id} mono />
+        <Field label="账号编号" value={data.me.id} mono />
         <Field label="邮箱" value={data.me.email} />
         <Field label="昵称" value={data.me.nickname} />
         <Field label="账号状态" value={data.me.status} />

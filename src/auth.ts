@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import { z } from "zod";
 
 import { exchangeGoogleIdToken, loginWithCredentials, refreshAccessToken } from "@/lib/auth-api";
+import type { TokenPairResponse } from "@/types/auth";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -16,6 +17,16 @@ type AppUser = User & {
   accessToken: string;
   refreshToken: string;
   accessTokenExpiresAt: number;
+};
+
+type RefreshReplayEntry = {
+  payload: TokenPairResponse;
+  expiresAt: number;
+};
+
+type GlobalAuthRefreshState = {
+  __helloviewRefreshInflight?: Map<string, Promise<TokenPairResponse>>;
+  __helloviewRefreshReplay?: Map<string, RefreshReplayEntry>;
 };
 
 function toNextAuthUser(payload: Awaited<ReturnType<typeof loginWithCredentials>>): AppUser {
@@ -60,6 +71,79 @@ function getStringArray(value: unknown): string[] {
     return [];
   }
   return value.filter((item): item is string => typeof item === "string");
+}
+
+function isFatalRefreshError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  // Be conservative here. Transient gateway / clock-skew / race conditions can
+  // surface as 401 once; we should not immediately force logout on first hit.
+  const fatalHints = [
+    "invalid refresh",
+    "refresh token expired",
+    "refresh token revoked",
+    "missing refresh token",
+    "token revoked",
+    "reused refresh token",
+  ];
+  return fatalHints.some((hint) => message.includes(hint));
+}
+
+function getRefreshInflightMap() {
+  const state = globalThis as typeof globalThis & GlobalAuthRefreshState;
+  if (!state.__helloviewRefreshInflight) {
+    state.__helloviewRefreshInflight = new Map<string, Promise<TokenPairResponse>>();
+  }
+  return state.__helloviewRefreshInflight;
+}
+
+function getRefreshReplayMap() {
+  const state = globalThis as typeof globalThis & GlobalAuthRefreshState;
+  if (!state.__helloviewRefreshReplay) {
+    state.__helloviewRefreshReplay = new Map<string, RefreshReplayEntry>();
+  }
+  return state.__helloviewRefreshReplay;
+}
+
+async function refreshAccessTokenWithDedup(refreshToken: string): Promise<TokenPairResponse> {
+  const now = Date.now();
+  const replay = getRefreshReplayMap();
+  for (const [key, entry] of replay.entries()) {
+    if (entry.expiresAt <= now) {
+      replay.delete(key);
+    }
+  }
+
+  const replayHit = replay.get(refreshToken);
+  if (replayHit && replayHit.expiresAt > now) {
+    return replayHit.payload;
+  }
+
+  const inflight = getRefreshInflightMap();
+  const existing = inflight.get(refreshToken);
+  if (existing) {
+    return existing;
+  }
+
+  const request = refreshAccessToken(refreshToken)
+    .then((payload) => {
+      // Allow near-simultaneous requests carrying the old cookie to reuse this result
+      // and avoid refresh-token rotation races.
+      replay.set(refreshToken, {
+        payload,
+        expiresAt: Date.now() + 15_000,
+      });
+      return payload;
+    })
+    .finally(() => {
+      inflight.delete(refreshToken);
+    });
+
+  inflight.set(refreshToken, request);
+  return request;
 }
 
 const providers: NonNullable<NextAuthConfig["providers"]> = [
@@ -114,6 +198,7 @@ const authConfig: NextAuthConfig = {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token.accessTokenExpiresAt = user.accessTokenExpiresAt;
+        token.refreshFailureCount = 0;
         token.error = undefined;
         return token;
       }
@@ -129,6 +214,7 @@ const authConfig: NextAuthConfig = {
           token.accessToken = payload.access_token;
           token.refreshToken = payload.refresh_token;
           token.accessTokenExpiresAt = Date.now() + payload.expires_in * 1000;
+          token.refreshFailureCount = 0;
           token.error = undefined;
         } catch {
           token.error = "OAuthExchangeFailed";
@@ -139,7 +225,14 @@ const authConfig: NextAuthConfig = {
 
       const accessToken = getString(token.accessToken);
       const accessTokenExpiresAt = getNumber(token.accessTokenExpiresAt);
-      if (accessToken && accessTokenExpiresAt && Date.now() < accessTokenExpiresAt - 30_000) {
+      
+      // Refresh token if it's within 10 minutes of expiration
+      // (Default Access Token TTL is 15 mins, so this rotates it every 5 mins)
+      if (
+        accessToken &&
+        accessTokenExpiresAt &&
+        Date.now() < accessTokenExpiresAt - 600_000
+      ) {
         return token;
       }
 
@@ -150,15 +243,27 @@ const authConfig: NextAuthConfig = {
       }
 
       try {
-        const payload = await refreshAccessToken(refreshToken);
+        const payload = await refreshAccessTokenWithDedup(refreshToken);
         token.accessToken = payload.access_token;
         token.refreshToken = payload.refresh_token;
         token.accessTokenExpiresAt = Date.now() + payload.expires_in * 1000;
         token.roles = payload.user.roles;
         token.scopes = payload.user.scopes;
+        token.scopeBackfillAttempted = true;
+        token.refreshFailureCount = 0;
         token.error = undefined;
-      } catch {
-        token.error = "RefreshAccessTokenError";
+      } catch (error) {
+        const refreshFailureCount = (getNumber(token.refreshFailureCount) ?? 0) + 1;
+        token.refreshFailureCount = refreshFailureCount;
+
+        // Avoid aggressive forced logout. Even on fatal-like refresh failures,
+        // keep current token state and let UI guide user to re-login manually.
+        // This prevents sudden /login redirects during temporary network/auth jitter.
+        if (isFatalRefreshError(error) && refreshFailureCount >= 2) {
+          token.error = "RefreshTokenExpired";
+        } else {
+          token.error = "RefreshAccessTokenTransientError";
+        }
       }
 
       return token;

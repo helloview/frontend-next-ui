@@ -1,13 +1,13 @@
 const ROLE_LABELS: Record<string, string> = {
-  admin: "admin",
-  user: "注册用户(user)",
-  basic: "注册用户(user)",
+  admin: "管理员",
+  user: "成员",
 };
 
-const ROLE_PRIORITY = ["admin", "user", "basic"];
+const ROLE_PRIORITY = ["admin", "user"] as const;
 
 export function roleLabel(role: string): string {
-  return ROLE_LABELS[role] ?? role;
+  const normalized = normalizeRoleValue(role);
+  return ROLE_LABELS[normalized] ?? role;
 }
 
 export function primaryRoleLabel(roles: string[]): string {
@@ -26,12 +26,27 @@ export function primaryRoleLabel(roles: string[]): string {
 }
 
 export function roleLabels(roles: string[]): string[] {
-  return Array.from(new Set(roles.map(roleLabel)));
+  const normalized = roles.map(normalizeRoleValue).filter((role): role is "admin" | "user" => role === "admin" || role === "user");
+  if (normalized.length === 0) {
+    return [];
+  }
+  return Array.from(new Set(normalized)).map((role) => ROLE_LABELS[role]);
 }
 
 export function normalizeRoleValue(role: string): string {
-  if (role === "basic") {
+  const value = role.trim().toLowerCase();
+  if (value === "basic" || value === "user" || value === "成员") {
     return "user";
   }
-  return role;
+  if (value === "admin" || value === "管理员") {
+    return "admin";
+  }
+  return value;
+}
+
+export function systemRoleValues(roles: string[]): string[] {
+  const normalized = roles
+    .map(normalizeRoleValue)
+    .filter((role): role is "admin" | "user" => role === "admin" || role === "user");
+  return Array.from(new Set(normalized));
 }

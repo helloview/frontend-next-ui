@@ -15,7 +15,7 @@ export function OverviewPanel({ data }: OverviewPanelProps) {
       icon: ShieldCheck,
     },
     {
-      label: "Scope 数量",
+      label: "权限数量",
       value: String(data.me.scopes.length),
       icon: KeyRound,
     },
