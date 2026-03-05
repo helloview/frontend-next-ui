@@ -5,6 +5,7 @@ const fallbackGeminiLlmApiBaseUrl = "http://localhost:8080/gemini";
 const fallbackOllamaLlmApiBaseUrl = "http://localhost:8080/ollama";
 const fallbackR2ServiceApiBaseUrl = "http://localhost:8080/r2";
 const fallbackIndexTtsApiBaseUrl = "http://localhost:8080/indextts";
+const fallbackChatboxApiBaseUrl = "http://localhost:8080/chatbox";
 
 export function getServerUmsApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_UMS_API_BASE_URL ?? fallbackUmsApiBaseUrl;
@@ -36,4 +37,8 @@ export function getServerR2ServiceApiBaseUrl(): string {
 
 export function getServerIndexTtsApiBaseUrl(): string {
   return process.env.INDEXTTS_API_BASE_URL ?? fallbackIndexTtsApiBaseUrl;
+}
+
+export function getServerChatboxApiBaseUrl(): string {
+  return process.env.CHATBOX_API_BASE_URL ?? fallbackChatboxApiBaseUrl;
 }

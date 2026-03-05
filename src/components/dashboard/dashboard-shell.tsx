@@ -15,6 +15,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  MessageCircle,
   Moon,
   Plus,
   Settings,
@@ -30,6 +31,8 @@ import { toast } from "sonner";
 
 import { BrandLogo, BrandLogoAnimated } from "@/components/brand/brand-logo";
 import { LibraryHubPanel } from "@/components/dashboard/panels/library-hub-panel";
+import { ChatboxPanel } from "@/components/dashboard/panels/chatbox-panel";
+import { TarotPanel } from "@/components/dashboard/panels/tarot-panel";
 import { StudioWorkbenchPanel } from "@/components/dashboard/panels/studio-workbench";
 import { TodoWorkspace } from "@/components/dashboard/panels/todo-workspace";
 import type { DashboardData } from "@/components/dashboard/types";
@@ -610,7 +613,8 @@ function SecurityView({
 }
 
 export function DashboardShell({ data }: DashboardShellProps) {
-  const [activeNav, setActiveNav] = useState<"studio" | "library" | "todos" | "profile" | "security" | "rbac">("studio");
+  type DashboardNav = "studio" | "library" | "todos" | "chatbox" | "tarot" | "profile" | "security" | "rbac";
+  const [activeNav, setActiveNav] = useState<DashboardNav>("studio");
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [nickname, setNickname] = useState(data.me.nickname || data.me.email || "未知用户");
@@ -771,6 +775,8 @@ export function DashboardShell({ data }: DashboardShellProps) {
     studio: "创作工作台",
     library: "资料库",
     todos: "待办任务",
+    chatbox: "AI 助手",
+    tarot: "塔罗牌",
     profile: "个人资料",
     security: "安全设置",
     rbac: "用户管理",
@@ -780,6 +786,11 @@ export function DashboardShell({ data }: DashboardShellProps) {
     { id: "studio" as const, label: "创作工作台", icon: Sparkles },
     { id: "library" as const, label: "资料库", icon: BookOpen },
     { id: "todos" as const, label: "待办任务", icon: CheckSquare },
+  ];
+
+  const utilityItems = [
+    { id: "chatbox" as const, label: "AI 助手", icon: MessageCircle },
+    { id: "tarot" as const, label: "塔罗牌", icon: Sparkles },
   ];
 
   const settingsItems = [
@@ -852,7 +863,7 @@ export function DashboardShell({ data }: DashboardShellProps) {
     setIsMobileMenuOpen(true);
   };
 
-  const handleMobileNavSelect = (next: "studio" | "library" | "todos" | "profile" | "security" | "rbac") => {
+  const handleMobileNavSelect = (next: DashboardNav) => {
     setActiveNav(next);
     closeMobileMenu();
   };
@@ -899,6 +910,32 @@ export function DashboardShell({ data }: DashboardShellProps) {
             ) : null}
             <nav className="space-y-0.5">
               {mainNavItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={`flex w-full items-center rounded-lg py-2 text-[13px] font-medium transition-colors ${
+                    isSidebarCollapsed ? "justify-center px-2" : "px-3"
+                  } ${
+                    activeNav === item.id
+                      ? "bg-rose-50 text-rose-700 shadow-sm"
+                      : "text-zinc-500 hover:bg-rose-50/50 hover:text-rose-700"
+                  }`}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                  aria-label={item.label}
+                >
+                  <item.icon className={`${isSidebarCollapsed ? "" : "mr-2.5"} h-4 w-4 ${activeNav === item.id ? "text-rose-600" : "text-zinc-400"}`} />
+                  {!isSidebarCollapsed ? item.label : null}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            {!isSidebarCollapsed ? (
+              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">实用工具</p>
+            ) : null}
+            <nav className="space-y-0.5">
+              {utilityItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveNav(item.id)}
@@ -1046,9 +1083,9 @@ export function DashboardShell({ data }: DashboardShellProps) {
           </section>
 
           <section>
-            <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">管理与安全</p>
+            <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">实用工具</p>
             <nav className="space-y-1.5">
-              {mobileNavItems.map(item => {
+              {utilityItems.map(item => {
                 const isActive = activeNav === item.id;
                 return (
                   <button 
@@ -1057,6 +1094,29 @@ export function DashboardShell({ data }: DashboardShellProps) {
                     className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97] ${
                       isActive 
                         ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 dark:bg-rose-600 dark:text-white dark:shadow-rose-600/20" 
+                        : "text-zinc-800 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900/50 dark:hover:text-white"
+                    }`}
+                  >
+                    <item.icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${isActive ? "text-rose-400 dark:text-white" : "text-zinc-600 dark:text-zinc-300"}`} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </section>
+
+          <section>
+            <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">管理与安全</p>
+            <nav className="space-y-1.5">
+              {mobileNavItems.map(item => {
+                const isActive = activeNav === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleMobileNavSelect(item.id)}
+                    className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-[15px] font-bold transition-all active:scale-[0.97] ${
+                      isActive
+                        ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20 dark:bg-rose-600 dark:text-white dark:shadow-rose-600/20"
                         : "text-zinc-800 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900/50 dark:hover:text-white"
                     }`}
                   >
@@ -1148,6 +1208,8 @@ export function DashboardShell({ data }: DashboardShellProps) {
             ) : null}
             {activeNav === "library" ? <LibraryHubPanel /> : null}
             {activeNav === "todos" ? <TodoView storageNamespace={data.me.id} /> : null}
+            {activeNav === "chatbox" ? <ChatboxPanel userAvatar={user.avatar} /> : null}
+            {activeNav === "tarot" ? <TarotPanel /> : null}
             {activeNav === "profile" ? (
               <SettingsView
                 user={user}
