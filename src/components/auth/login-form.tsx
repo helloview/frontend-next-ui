@@ -58,7 +58,7 @@ export function LoginForm() {
         <div className="space-y-2 text-center lg:text-left">
           <BrandLogoAnimated className="mx-auto mb-4 lg:hidden" logoSize={28} withText={false} />
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">账号登录</h2>
-          <p className="text-[13px] text-zinc-500">使用团队账号登录，继续你的创作协作。</p>
+          <p className="text-[13px] text-zinc-500">使用邮箱账号登录，继续你的创作协作。</p>
         </div>
 
         <form className="space-y-4" onSubmit={onSubmit}>
@@ -92,9 +92,12 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
-          当前仅支持内部员工邀请开通账号，请联系管理员获取邀请。
-        </div>
+        <p className="text-center text-[13px] text-zinc-500">
+          还没有账号？
+          <Link href="/register" className="ml-1 font-medium text-zinc-900 transition-colors hover:text-rose-600 hover:underline underline-offset-4">
+            立即注册
+          </Link>
+        </p>
       </div>
     </AuthShell>
   );
